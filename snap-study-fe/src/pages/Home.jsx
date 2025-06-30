@@ -21,6 +21,7 @@ import {
   Sparkle,
   SparkleIcon,
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 export default function Home() {
   return (
@@ -68,13 +69,16 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-              <button className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white px-12 py-4 rounded-2xl text-xl font-black hover:from-purple-700 hover:via-pink-700 hover:to-red-700 transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-purple-500/50">
+              <NavLink
+                to="/app"
+                className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white px-12 py-4 rounded-2xl text-xl font-black hover:from-purple-700 hover:via-pink-700 hover:to-red-700 transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-purple-500/50"
+              >
                 <span className="relative z-10 flex items-center">
                   Try SnapStudy
                   <Sparkles className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-              </button>
+              </NavLink>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">

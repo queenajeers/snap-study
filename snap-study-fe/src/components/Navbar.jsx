@@ -1,13 +1,35 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { X, Menu, Sparkles } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Navbar() {
+  const { user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  if (user)
+    return (
+      <div>
+        <nav className="relative z-50  backdrop-blur-xl border-b border-white/10">
+          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-20">
+              <div className="flex items-center space-x-3">
+                <img
+                  src="/SnapStudyLogoDarkMode.png"
+                  className="w-32"
+                  alt="Logo"
+                />
+              </div>
+              <div>Logout</div>
+            </div>
+          </div>
+        </nav>
+      </div>
+    );
 
   return (
     <div>
-      <nav className="relative z-50 bg-[#161A1C] backdrop-blur-xl border-b border-white/10">
+      <nav className="relative z-50  backdrop-blur-xl border-b border-white/10">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-3">
