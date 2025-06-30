@@ -1,33 +1,8 @@
-import React from "react";
-import {
-  BookOpen,
-  Brain,
-  Upload,
-  BarChart3,
-  Users,
-  Zap,
-  CheckCircle,
-  ArrowRight,
-  Stethoscope,
-  FileText,
-  Target,
-  Lightbulb,
-  Sparkles,
-  Rocket,
-  TrendingUp,
-  Award,
-  Clock,
-  Shield,
-  Sparkle,
-  SparkleIcon,
-} from "lucide-react";
-
-export default function Home() {
+function App2() {
   return (
-    <div>
-      {" "}
+    <div className="min-h-screen bg-black text-white overflow-hidden">
       {/* Hero Section */}
-      <section className="relative z-10 pt-10 pb-32">
+      <section className="relative z-10 pt-20 pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-full px-6 py-3 mb-8">
@@ -52,7 +27,7 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="md:text-2xl  text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
+            <p className="text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
               Drop your boring PDFs. Get{" "}
               <span className="text-purple-400 font-bold">insane quizzes</span>,
               <span className="text-pink-400 font-bold">
@@ -68,12 +43,19 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-              <button className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white px-12 py-4 rounded-2xl text-xl font-black hover:from-purple-700 hover:via-pink-700 hover:to-red-700 transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-purple-500/50">
+              <button className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white px-12 py-6 rounded-3xl text-xl font-black hover:from-purple-700 hover:via-pink-700 hover:to-red-700 transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-purple-500/50">
                 <span className="relative z-10 flex items-center">
-                  Try SnapStudy
-                  <Sparkles className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
+                  UNLEASH THE BEAST
+                  <Rocket className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              </button>
+
+              <button className="group border-2 border-purple-500 text-purple-300 px-12 py-6 rounded-3xl text-xl font-bold hover:bg-purple-500/10 transition-all duration-300 transform hover:scale-105">
+                <span className="flex items-center">
+                  Watch Magic Happen
+                  <Zap className="w-6 h-6 ml-3 group-hover:text-yellow-400 transition-colors" />
+                </span>
               </button>
             </div>
 
@@ -100,6 +82,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* Features Section */}
       <section id="features" className="relative z-10 py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -185,6 +168,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* Stats Section */}
       <section className="relative z-10 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -236,6 +220,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* CTA Section */}
       <section className="relative z-10 py-32">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -273,17 +258,21 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* Footer */}
-      <footer className="relative z-10 bg-[#161A1C] backdrop-blur-xl border-t border-white/10 py-16">
+      <footer className="relative z-10 bg-black/50 backdrop-blur-xl border-t border-white/10 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-6">
-                <img
-                  src="/SnapStudyLogoDarkMode.png"
-                  className="w-32"
-                  alt="Logo"
-                />
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-2xl flex items-center justify-center">
+                  <Brain className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <span className="text-2xl font-black bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
+                    MedicoAI
+                  </span>
+                </div>
               </div>
               <p className="text-gray-400 leading-relaxed">
                 Transforming medical minds, one upload at a time. The future of
@@ -404,7 +393,7 @@ export default function Home() {
           </div>
           <div className="border-t border-white/10 mt-12 pt-8 text-center">
             <p className="text-gray-400">
-              &copy; 2025 SnapStudy. All rights reserved.
+              &copy; 2024 MedicoAI. All rights reserved.
               <span className="text-purple-400 ml-2">
                 Built for the future of medicine.
               </span>
