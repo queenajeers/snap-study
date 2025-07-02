@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import ZeroNotes from "./ZeroNotes";
 import StudyNoteItem from "../elements/StudyNoteItem";
 import { Plus } from "lucide-react";
+import Modal from "./common/Modal";
+import UploadContent from "./common/UploadContent";
 
 const notes = [
   {
@@ -84,10 +86,21 @@ const notes = [
 ];
 
 export default function Dashboard() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleClose = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="max-w-7xl mx-auto pt-14 px-4 text-white">
       <p className="text-5xl font-bold mb-10 ">Welcome to Snap Study!</p>
-      <button className="group relative inline-flex items-center gap-2 text-sm bg-white text-black py-2 px-5 rounded-full overflow-hidden border border-white shadow-md transition-all duration-300 hover:bg-black hover:text-white active:scale-95">
+      <button
+        onClick={() => {
+          setIsModalOpen(true);
+        }}
+        className="cursor-pointer group relative inline-flex items-center gap-2 text-sm bg-white text-black py-2 px-5 rounded-full overflow-hidden border border-white shadow-md transition-all duration-300 hover:bg-black hover:text-white active:scale-95"
+      >
         <span className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 group-hover:animate-shine" />
         <Plus width={18} />
         <span className="relative z-10">Add StudyNote</span>
@@ -120,6 +133,12 @@ export default function Dashboard() {
           </table>
         </div>
       )}
+      <Modal isOpen={isModalOpen} onClose={handleClose}>
+        <UploadContent
+          onUpload={(file) => console.log("File uploaded:", file)}
+          onClose={handleClose}
+        />
+      </Modal>
     </div>
   );
 }

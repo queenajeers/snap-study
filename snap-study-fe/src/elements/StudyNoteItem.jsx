@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Eye, FileText, Pencil, Star, StarOff } from "lucide-react";
+import { FileText, Star } from "lucide-react";
 
 export default function StudyNoteItem({
   name,
@@ -10,18 +10,30 @@ export default function StudyNoteItem({
   const [isStarred, setIsStarred] = useState(starred);
 
   return (
-    <tr className="cursor-pointer transition-colors duration-150">
-      <td className="py-3 px-4 font-medium flex items-center gap-4">
-        {" "}
-        <FileText size={18} className="text-gray-400" />
-        {name}
+    <tr className="cursor-pointer transition duration-150 group">
+      <td className="py-3 px-4 font-medium flex items-center gap-3">
+        <FileText
+          size={18}
+          className="text-gray-400 transition-transform duration-200 group-hover:scale-105"
+        />
+        <span className="transition-transform duration-200 group-hover:scale-105">
+          {name}
+        </span>
       </td>
-      <td className="py-3 px-4">{sourcesCount}</td>
-      <td className="py-3 px-4">{lastVisited}</td>
+      <td className="py-3 px-4">
+        <span className="transition-transform duration-200 group-hover:scale-105 inline-block">
+          {sourcesCount}
+        </span>
+      </td>
+      <td className="py-3 px-4">
+        <span className="transition-transform duration-200 group-hover:scale-105 inline-block">
+          {lastVisited}
+        </span>
+      </td>
       <td className="py-3 px-4">
         <button
           onClick={() => setIsStarred((prev) => !prev)}
-          className="text-gray-500 hover:text-gray-600 transition"
+          className="text-gray-500 transition-transform duration-200 hover:scale-110"
         >
           {isStarred ? (
             <Star size={18} fill="white" stroke="white" />
