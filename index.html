@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FastAPI Background Task Test</title>
+  </head>
+  <body>
+    <h1>Test Background Task</h1>
+    <button onclick="sendTask()">Send Background Task</button>
+
+    <script>
+      function sendTask() {
+        fetch("http://localhost:8000/process", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ data: "Background test" }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Task Sent:", data);
+            // Close tab after sending
+            window.close();
+          })
+          .catch((error) => console.error("Error sending task:", error));
+      }
+    </script>
+  </body>
+</html>
