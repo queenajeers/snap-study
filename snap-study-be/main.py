@@ -12,7 +12,6 @@
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from tasks import long_running_task
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Body
 from tasks import process_the_source
@@ -29,10 +28,6 @@ app.add_middleware(
 class TaskRequest(BaseModel):
     data: str
 
-@app.post("/process")
-def process_data(request: TaskRequest):
-    task = long_running_task.delay(request.data)
-    return {"message": "Task received!", "task_id": task.id}
 
 
 # def process_the_source(uid:str,project_id:str,source_id:str,downloadURL:str):
@@ -42,7 +37,7 @@ class SourceRequest(BaseModel):
     uid: str
     project_id: str
     source_id: str
-    downloadURL: str
+    filePath: str
 
 @app.post("/process_source")
 def process_source(request: SourceRequest):
@@ -51,7 +46,7 @@ def process_source(request: SourceRequest):
         uid=request.uid,
         project_id=request.project_id,
         source_id=request.source_id,
-        downloadURL=request.downloadURL
+        filePath=request.filePath
     )
     return {
         "message": "Started processing the source",

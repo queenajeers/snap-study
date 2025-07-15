@@ -36,17 +36,12 @@ function Topics() {
     localStorage.setItem("studyTopics", JSON.stringify(topics));
   }, [topics]);
 
-  const startProcessSource = async (
-    uid,
-    project_id,
-    source_id,
-    downloadURL
-  ) => {
+  const startProcessSource = async (uid, project_id, source_id, filePath) => {
     const data = {
       uid: uid,
       project_id: project_id,
       source_id: source_id,
-      downloadURL: downloadURL,
+      filePath: filePath,
     };
     try {
       const response = await axios.post(
@@ -99,12 +94,7 @@ function Topics() {
     const sources = await Promise.all(sourcePromises);
     for (let index = 0; index < sources.length; index++) {
       const source = sources[index];
-      await startProcessSource(
-        user.uid,
-        projectID,
-        source.id,
-        source.downloadURL
-      );
+      await startProcessSource(user.uid, projectID, source.id, source.filePath);
     }
 
     setTopics((prev) =>
@@ -166,7 +156,7 @@ function Topics() {
 
     for (let index = 0; index < sources.length; index++) {
       const source = sources[index];
-      await startProcessSource(user.uid, id, source.id, source.downloadURL);
+      await startProcessSource(user.uid, id, source.id, source.filePath);
     }
 
     setTopics((prev) =>

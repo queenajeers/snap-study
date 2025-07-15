@@ -5,6 +5,7 @@ import {
   uploadBytes,
   getDownloadURL,
   deleteObject,
+  uploadBytesResumable,
 } from "firebase/storage";
 import { get, remove } from "firebase/database";
 
@@ -152,26 +153,102 @@ export const removeSourceFilesFromProject = async (
 };
 
 export const uploadFileToProject = async (uid, file, projectId) => {
-  const fileName = file.name; // Use the original file name, or generate a unique one
-
-  // Construct the full path: uid/projects/project_id/filename
+  const fileName = file.name;
   const filePath = `users/${uid}/projects/${projectId}/${fileName}`;
   const _storageRef = storageRef(storage, filePath);
+  const uploadStatusRef = ref(
+    database,
+    `users/${uid}/projects/${projectId}/upload_status`
+  );
 
-  try {
-    // Upload the file
-    const snapshot = await uploadBytes(_storageRef, file);
-    console.log("Uploaded a blob or file!", snapshot);
+  // ✅ Check if the project exists before upload starts
+  const projectRef = ref(database, `users/${uid}/projects/${projectId}`);
+  const projectSnapshot = await get(projectRef);
+  if (!projectSnapshot.exists()) {
+    const error = new Error(
+      `Project ${projectId} no longer exists. Upload aborted.`
+    );
+    console.warn(error.message);
 
-    // Get the download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    console.log("File available at:", downloadURL);
+    await set(uploadStatusRef, {
+      status: "error",
+      error: error.message,
+      fileName,
+      failedAt: Date.now(),
+    });
 
-    return { downloadURL, filePath }; // Return the URL and path for your database
-  } catch (error) {
-    console.error("Error uploading file:", error);
     throw error;
   }
+
+  return new Promise((resolve, reject) => {
+    const uploadTask = uploadBytesResumable(_storageRef, file);
+
+    uploadTask.on(
+      "state_changed",
+      async (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+
+        // ✅ Optional: recheck if the project still exists during upload
+        const currentProjectSnapshot = await get(projectRef);
+        if (!currentProjectSnapshot.exists()) {
+          const cancelError = new Error(
+            "Upload cancelled. Project was deleted mid-upload."
+          );
+          console.warn(cancelError.message);
+
+          uploadTask.cancel(); // This will trigger error callback
+
+          await set(uploadStatusRef, {
+            status: "error",
+            error: cancelError.message,
+            fileName,
+            failedAt: Date.now(),
+          });
+
+          return reject(cancelError);
+        }
+
+        await set(uploadStatusRef, {
+          status: "uploading",
+          progress: Math.round(progress),
+          fileName,
+          filePath,
+          startedAt: Date.now(),
+        });
+
+        console.log(`Upload is ${Math.round(progress)}% done`);
+      },
+      async (error) => {
+        // Upload failed
+        console.error("Upload failed:", error);
+
+        await set(uploadStatusRef, {
+          status: "error",
+          error: error.message,
+          fileName,
+          failedAt: Date.now(),
+        });
+
+        reject(error);
+      },
+      async () => {
+        // Upload successful
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+        await set(uploadStatusRef, {
+          status: "completed",
+          fileName,
+          filePath,
+          downloadURL,
+          completedAt: Date.now(),
+        });
+
+        console.log("Upload successful:", downloadURL);
+        resolve({ downloadURL, filePath });
+      }
+    );
+  });
 };
 
 export const deleteProjectAndFiles = async (uid, projectID) => {
