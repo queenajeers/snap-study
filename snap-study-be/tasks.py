@@ -3,6 +3,7 @@ import json
 import asyncio
 import tempfile
 import requests
+import uuid
 import fitz  # PyMuPDF
 import aiohttp
 from firebase_config import db, bucket
@@ -10,16 +11,21 @@ from worker import celery_app
 import math
 import time
 import logging
+import re
 from datetime import datetime
 from typing import Optional, Dict, Any
+from dotenv import load_dotenv
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 MAX_RETRIES = 3
 CHUNK_SIZE = 12
-LLM_MODEL = "mistralai/ministral-3b"
+LLM_MODEL = "google/gemini-2.0-flash-001"
+OPENAI_MODEL="openai/gpt-4o-mini"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 HEADERS = {
     "Authorization": f"Bearer {os.environ.get('OPENROUTER_API_KEY')}",
@@ -270,20 +276,22 @@ async def process_chunk(session, chunk, topics_ref, total_chunks, source_ref):
     while retries < MAX_RETRIES and not success:
         try:
             prompt = f"""
-You are a document analysis assistant. Carefully extract key **topics** from the given text and assign each topic to a specific page range.
+You are a medical document analysis assistant. Your task is to extract only the **main medical topics or sections** from the provided text and assign each to the **specific page range** where it appears.
 
-Guidelines:
-- Break the chunk into **smaller logical topic sections** (e.g. every 2–5 pages).
-- Each topic must be mapped to the **actual pages** where it appears, not the whole chunk.
-- Use this JSON format: {{ "Topic Title": [startPage, endPage], ... }}
-- Do not include generic titles like "Introduction", "Conclusion", etc.
-- No Markdown, no explanations — output **only valid JSON**.
+Instructions:
+- Focus on **high-level medical topics** such as diseases, treatments, diagnostics, procedures, or core subject areas.
+- Ignore minor subheadings like "Definition", "Overview", "Etiology", "Classification", "A", "B", etc.
+- Do not include generic titles such as "Introduction", "Conclusion", or "References".
+- Each topic should represent a **meaningful, self-contained subject** that spans about 2–5 pages.
+- Use this exact JSON format: {{ "Topic Title": [startPage, endPage], ... }}
+- Return **only valid JSON** — no explanations, no Markdown.
 
 Pages included: {chunk['pages_included']}
 
 Text to analyze:
 {chunk['text']}
 """
+
             payload = {
                 "model": LLM_MODEL,
                 "messages": [
@@ -294,10 +302,16 @@ Text to analyze:
 
             async with session.post(OPENROUTER_URL, headers=HEADERS, json=payload, timeout=120) as resp:
                 result = await resp.json()
-                content = result["choices"][0]["message"]["content"]
-
+            
+                raw_content = result["choices"][0]["message"]["content"]
                 try:
-                    topics_json = json.loads(content)
+                    topics_json = extract_json_from_text(raw_content)
+                except ValueError as e:
+                    logger.warning(f"JSON extraction failed: {e}")
+                    raise
+                
+                try:
+                    
                     topics = list(topics_json.keys())
 
                     await write_chunk_result(
@@ -341,3 +355,214 @@ async def write_chunk_result(topics_ref, index, topics, start_page, end_page, er
     if error:
         data["error"] = error
     topics_ref.child(str(index)).set(data)
+
+
+def extract_json_from_text(text: str) -> dict:
+    """
+    Extract and clean JSON from a string that may contain markdown or extra text.
+    """
+    try:
+        # Match any JSON object (including nested ones)
+        match = re.search(r'{[\s\S]*}', text)
+        if not match:
+            raise ValueError("No valid JSON block found in the response.")
+
+        json_str = match.group()
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse JSON: {e}")
+    
+
+@celery_app.task
+def create_content(uid: str, project_id: str, content_type: str, filePath: str, selected_topics: list):
+    asyncio.run(handle_content(uid, project_id, content_type, filePath, selected_topics))
+
+async def handle_content(uid: str, project_id: str, content_type: str, filePath: str, selected_topics: list):
+    content_id = f"id-{uuid.uuid4().hex}"
+
+    content_ref = db.reference(f"users/{uid}/projects/{project_id}/contents/{content_id}")
+    
+    # Initialize content metadata in Firebase
+    content_ref.set({
+        "creationInProgress": True,
+        "contentType": content_type,
+        "flashcards": [],
+        "createdAt": datetime.now().isoformat()
+    })
+
+     # Collect topic names
+    topic_names = [topic.get("topic", "").strip() for topic in selected_topics if topic.get("topic")]
+    topic_names_string = ", ".join(topic_names)
+
+    # Add topicNames field
+    content_ref.update({
+        "topicNames": topic_names_string
+    })
+
+    # Download PDF
+    try:
+        blob = bucket.blob(filePath)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            blob.download_to_file(tmp)
+            pdf_path = tmp.name
+    except Exception as e:
+        logger.error(f"Failed to download file: {e}")
+        content_ref.update({"creationInProgress": False, "error": str(e)})
+        return
+
+    try:
+        doc = fitz.open(pdf_path)
+        async with aiohttp.ClientSession() as session:
+            for topic in selected_topics:
+                min_page = topic.get("minPage")
+                max_page = topic.get("maxPage")
+                topic_title = topic.get("topic")
+
+                text = ""
+                for i in range(min_page - 1, max_page):
+                    try:
+                        text += f"\n--- Page {i+1} ---\n{doc[i].get_text()}"
+                    except Exception as e:
+                        logger.warning(f"Error reading page {i+1}: {e}")
+                
+                # Generate flashcards for this topic
+                flashcards = await generate_flashcards(session, text, topic_title, uid)
+                
+                # Append flashcards to Firebase
+                for card in flashcards:
+                    content_ref.child("flashcards").push(card)
+
+    except Exception as e:
+        logger.error(f"Error during content generation: {e}")
+        content_ref.update({"creationInProgress": False, "error": str(e)})
+        return
+    finally:
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+    
+    content_ref.update({"creationInProgress": False, "completedAt": datetime.now().isoformat()})
+    logger.info(f"Flashcards successfully created under content {content_id}")
+
+async def generate_flashcards(session, topic_text: str, topic_title: str, uid: str):
+    """Generate flashcards using LLM from a topic text"""
+    prompt = f"""
+You are a medical flashcard creation assistant. Based on the following topic titled "{topic_title}", generate a list of detailed flashcards.
+
+**Instructions**:
+- Each flashcard must include:
+  - **front**: A clear, concise question or prompt based on the topic.
+  - **back**: A thorough and accurate answer or explanation.
+  - **backImagePrompt**: A short, descriptive prompt for an image that would aid understanding (e.g., "Diagram of nephron structure", "X-ray showing lung consolidation", "Histology slide of squamous cell carcinoma"). 
+    - If **no** image would help, write **"none"** instead of leaving it blank.
+    - Be specific and helpful. The goal is to enhance memory with visuals where possible.
+
+- Return **only valid JSON** in the following format (no markdown or commentary):
+
+[
+  {{
+    "front": "...",
+    "back": "...",
+    "backImagePrompt": "..." or "none"
+  }},
+  ...
+]
+
+**Text**:
+{topic_text}
+"""
+
+
+    payload = {
+        "model": OPENAI_MODEL,
+        "messages": [
+            {"role": "system", "content": "You are a helpful flashcard generation assistant."},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    try:
+        async with session.post(OPENROUTER_URL, headers=HEADERS, json=payload, timeout=120) as resp:
+            result = await resp.json()
+            raw = result["choices"][0]["message"]["content"]
+            flashcards = extract_flashcards_json(raw)
+            
+            # Generate image if backImagePrompt is present
+            updated_flashcards = []
+            for card in flashcards:
+                prompt = card.get("backImagePrompt", "").strip()
+                if prompt!="none":
+                    image_url = await generate_image_and_upload(prompt, uid)
+                    card["imageUrl"] = image_url
+                updated_flashcards.append(card)
+
+            return updated_flashcards
+
+    except Exception as e:
+        logger.error(f"LLM request failed: {e}")
+        return []
+
+
+async def generate_image_and_upload(prompt: str, uid: str) -> Optional[str]:
+    """Generate image from prompt and upload to Firebase, return public URL"""
+    try:
+        from openai import OpenAI
+        import base64
+
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+        response = client.responses.create(
+            model="gpt-4.1-mini",
+            input=prompt,
+            tools=[{"type": "image_generation"}],
+        )
+
+        image_data = [
+            output.result
+            for output in response.output
+            if output.type == "image_generation_call"
+        ]
+
+        if not image_data:
+            logger.warning(f"No image generated for prompt: {prompt}")
+            return None
+
+        image_base64 = image_data[0]
+        filename = f"{uuid.uuid4().hex}.png"
+        local_path = os.path.join(tempfile.gettempdir(), filename)
+        
+        with open(local_path, "wb") as f:
+            f.write(base64.b64decode(image_base64))
+
+        # Upload to Firebase Storage
+        firebase_path = f"users/{uid}/project_image_generations/{filename}"
+        blob = bucket.blob(firebase_path)
+        blob.upload_from_filename(local_path)
+        blob.make_public()
+
+        os.remove(local_path)
+
+        return blob.public_url
+
+    except Exception as e:
+        logger.error(f"Image generation/upload failed: {e}")
+        return None
+
+def extract_flashcards_json(text: str):
+    """Extract valid JSON flashcards from LLM output"""
+    try:
+        match = re.search(r'\[.*\]', text, re.DOTALL)
+        if not match:
+            raise ValueError("No JSON array found in response.")
+        json_str = match.group()
+        cards = json.loads(json_str)
+        return [
+            {
+                "front": card.get("front", "").strip(),
+                "back": card.get("back", "").strip(),
+                "backImagePrompt": card.get("backImagePrompt", "").strip()
+            }
+            for card in cards if "front" in card and "back" in card
+        ]
+    except Exception as e:
+        logger.warning(f"Failed to extract flashcards JSON: {e}")
+        return []

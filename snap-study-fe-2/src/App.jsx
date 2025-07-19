@@ -4,6 +4,7 @@ import Header from "./components/Header";
 import Protected from "./pages/Protected";
 import { AuthProvider } from "./contexts/AuthContext";
 import StudyMaterialView from "./pages/StudyMaterialView";
+import TopicView from "./pages/TopicView";
 
 function Layout() {
   return (
@@ -20,9 +21,12 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    children: [{ index: true, element: <Protected /> }],
+    children: [
+      { index: true, element: <Protected /> },
+      { path: "topic/:id", element: <TopicView /> },
+    ],
   },
-  { path: "/studymaterial/:id", element: <StudyMaterialView /> },
+  ,
 ]);
 
 export default function App() {

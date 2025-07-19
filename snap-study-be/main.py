@@ -14,19 +14,16 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Body
-from tasks import process_the_source
+from tasks import process_the_source,create_content
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # allow all origins
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],  # allow all HTTP methods
     allow_headers=["*"],  # allow all headers
 )
-
-class TaskRequest(BaseModel):
-    data: str
 
 
 
@@ -52,3 +49,29 @@ def process_source(request: SourceRequest):
         "message": "Started processing the source",
         "task_id": task.id  # ✅ this is safe to serialize
     }
+
+
+class CreateContentRequest(BaseModel):
+    uid: str
+    project_id: str
+    content_type: str
+    filePath: str
+    selected_topics: list
+
+@app.post("/create_content")
+def create_content_(request: CreateContentRequest):
+    body =  request.model_dump_json()  # read the raw JSON payload
+    print("🔥 Received raw request body:", body)
+    task = create_content.delay(
+        uid = request.uid,
+        project_id = request.project_id,
+        content_type = request.content_type,
+        filePath = request.filePath,
+        selected_topics = request.selected_topics
+                                )
+    return {
+        "message": "Started processing the source",
+        "task_id": task.id  # ✅ this is safe to serialize
+    }
+
+# create_content(uid: str, project_id: str, content_type: str, filePath: str, selected_topics: list):

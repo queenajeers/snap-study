@@ -233,6 +233,7 @@ function Topics() {
                 onDeleteTopic={handleDeleteTopic}
                 onAddSources={handleAddSources}
                 onDeleteSources={handleDeleteSources}
+                uid={user.uid}
               />
             ))}
           </div>
