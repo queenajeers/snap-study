@@ -51,7 +51,7 @@ def process_source(request: SourceRequest):
     }
 
 @app.get("/")
-def process_source(request: SourceRequest):
+def process_source():
    
     return {
         "Running"
