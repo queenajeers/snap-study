@@ -2,3 +2,14 @@ fastapi
 uvicorn
 celery[redis]
 redis
+requests
+aiohttp
+python-dotenv
+firebase-admin
+openai
+pinecone-client
+langchain
+langchain-community
+PyMuPDF
+google-genai
+pillow
