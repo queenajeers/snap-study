@@ -17,6 +17,7 @@ function Topics() {
   const [topics, setTopics] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
+
   useEffect(() => {
     const fetchTopics = async () => {
       try {
@@ -38,10 +39,10 @@ function Topics() {
 
   const startProcessSource = async (uid, project_id, source_id, filePath) => {
     const data = {
-      uid: uid,
-      project_id: project_id,
-      source_id: source_id,
-      filePath: filePath,
+      uid,
+      project_id,
+      source_id,
+      filePath,
     };
     try {
       const response = await axios.post(
@@ -59,7 +60,6 @@ function Topics() {
 
   const handleAddTopic = async (title, files) => {
     const projectID = await createProject(user.uid, title);
-
     const newTopic = {
       id: projectID,
       title,
@@ -76,9 +76,9 @@ function Topics() {
       );
       let sourceData = {
         name: file.name,
-        downloadURL: downloadURL,
-        projectID: projectID,
-        filePath: filePath,
+        downloadURL,
+        projectID,
+        filePath,
         uploadedAt: new Date(),
       };
       const sourceID = await addSourceFileDataToProject(
@@ -87,13 +87,11 @@ function Topics() {
         sourceData
       );
       sourceData = { ...sourceData, id: sourceID };
-
       return sourceData;
     });
 
     const sources = await Promise.all(sourcePromises);
-    for (let index = 0; index < sources.length; index++) {
-      const source = sources[index];
+    for (const source of sources) {
       await startProcessSource(user.uid, projectID, source.id, source.filePath);
     }
 
@@ -122,14 +120,10 @@ function Topics() {
   const handleAddSources = async (id, files) => {
     setTopics((prev) =>
       prev.map((topic) =>
-        topic.id === id
-          ? {
-              ...topic,
-              isLoading: true,
-            }
-          : topic
+        topic.id === id ? { ...topic, isLoading: true } : topic
       )
     );
+
     const sourcePromises = files.map(async (file) => {
       const { downloadURL, filePath } = await uploadFileToProject(
         user.uid,
@@ -138,9 +132,9 @@ function Topics() {
       );
       let sourceData = {
         name: file.name,
-        downloadURL: downloadURL,
+        downloadURL,
         projectID: id,
-        filePath: filePath,
+        filePath,
         uploadedAt: new Date(),
       };
       const sourceID = await addSourceFileDataToProject(
@@ -148,14 +142,11 @@ function Topics() {
         id,
         sourceData
       );
-      sourceData = { ...sourceData, id: sourceID };
-      return sourceData;
+      return { ...sourceData, id: sourceID };
     });
 
     const sources = await Promise.all(sourcePromises);
-
-    for (let index = 0; index < sources.length; index++) {
-      const source = sources[index];
+    for (const source of sources) {
       await startProcessSource(user.uid, id, source.id, source.filePath);
     }
 
@@ -165,7 +156,7 @@ function Topics() {
           ? {
               ...topic,
               isLoading: false,
-              sources: [...topic.sources, sources],
+              sources: [...topic.sources, ...sources],
             }
           : topic
       )
@@ -189,12 +180,14 @@ function Topics() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <BookOpen className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Study Topics</h1>
+            <BookOpen className="w-8 h-8 text-gray-800" />
+            <h1 className="text-3xl font-semibold text-gray-900">
+              Study Topics
+            </h1>
           </div>
           <p className="text-gray-600">
             Organize your study materials by topic
@@ -204,7 +197,7 @@ function Topics() {
         <div className="flex justify-end mb-6">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-md font-medium"
           >
             <Plus className="w-5 h-5" />
             Add Topic
@@ -216,10 +209,10 @@ function Topics() {
             <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
               <FileText className="w-12 h-12 text-gray-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
               No topics added yet
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-gray-500">
               Get started by adding your first study topic
             </p>
           </div>

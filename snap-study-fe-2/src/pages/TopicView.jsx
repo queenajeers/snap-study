@@ -24,7 +24,6 @@ function TopicView() {
       const data = snapshot.val();
       if (data) {
         setTopic(data);
-        console.log(data.contents);
         if (data.contents) {
           setContent(data.contents);
         }
@@ -48,8 +47,6 @@ function TopicView() {
       selected_topics: selectedTopics,
     };
     try {
-      console.log("Sending:");
-      console.log(data);
       const response = await axios.post(
         "http://127.0.0.1:8000/create_content",
         data
@@ -63,69 +60,76 @@ function TopicView() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {topic?.title || "Untitled Topic"}
-            </h1>
-          </div>
+  const isProcessing =
+    topic?.sources &&
+    Object.values(topic.sources).some(
+      (source) => source.processingFinished === false
+    );
 
-          {/* Sources count */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Total Sources Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+  return (
+    <div
+      className={`min-h-screen bg-neutral-50 ${
+        isProcessing ? "pointer-events-none opacity-60" : ""
+      }`}
+    >
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="text-3xl font-semibold text-neutral-900 mb-2">
+            {topic?.title || "Untitled Topic"}
+          </h1>
+
+          {/* Source Info */}
+          <div className="flex flex-wrap gap-2 text-sm text-neutral-700">
+            {/* Source Count */}
+            <div className="flex items-center gap-2 bg-neutral-200 text-neutral-800 px-3 py-1 rounded-full">
               <FileText className="w-4 h-4" />
               {topic?.sources ? Object.keys(topic.sources).length : 0} source
               {topic?.sources && Object.keys(topic.sources).length !== 1 && "s"}
             </div>
 
-            {/* Processing Docs Badges */}
+            {/* Loading Badges */}
             {topic?.sources &&
               Object.entries(topic.sources)
                 .filter(([_, source]) => source.processingFinished === false)
                 .map(([key, source]) => (
                   <div
                     key={key}
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium"
+                    className="flex items-center gap-2 bg-neutral-300 text-neutral-700 px-3 py-1 rounded-full"
                   >
                     <Loader className="w-4 h-4 animate-spin" />
-                    <span>{source.name || "Unnamed"}</span>
+                    {source.name || "Unnamed"}
                   </div>
                 ))}
           </div>
         </div>
 
         {/* Generate Button */}
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-end mb-10">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            disabled={isProcessing}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-xl disabled:opacity-30 disabled:pointer-events-none"
           >
             <Plus className="w-5 h-5" />
             Generate
           </button>
         </div>
 
-        {/* No Topics Message */}
+        {/* Content */}
         {!contents ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-              <FileText className="w-12 h-12 text-gray-400" />
+          <div className="text-center py-20">
+            <div className="w-24 h-24 mx-auto mb-6 bg-neutral-100 rounded-full flex items-center justify-center">
+              <FileText className="w-12 h-12 text-neutral-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-medium text-neutral-900 mb-2">
               No items generated yet
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-neutral-500">
               Get started by generating your first knowledge item
             </p>
           </div>
         ) : (
-          // Topic Cards Grid
           <ContentList contents={contents} />
         )}
       </div>

@@ -1,5 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Edit2, Trash2, Plus, FolderMinus, X, Upload } from "lucide-react";
+import {
+  Edit2,
+  Trash2,
+  Plus,
+  FolderMinus,
+  X,
+  Upload,
+  FileText,
+} from "lucide-react";
 
 export const TopicActions = ({
   topic,
@@ -27,7 +35,6 @@ export const TopicActions = ({
         }
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isEditing, showDeleteSources, showAddSources]);
@@ -95,256 +102,222 @@ export const TopicActions = ({
     );
   };
 
-  // Modals and Actions (same as original)
-  // ---- Edit Title Modal ----
+  // ----------- Modal Layouts -------------
+  const ModalWrapper = ({ title, children }) => (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50">
+      <div className="modal-content bg-neutral-100 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6">
+          <h2 className="text-lg font-medium text-neutral-900">{title}</h2>
+          <button onClick={handleCloseModal} className="text-neutral-500">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
+    </div>
+  );
+
   if (isEditing) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="modal-content bg-white rounded-xl shadow-xl max-w-md w-full">
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Edit Topic Title
-            </h2>
-            <button
-              onClick={handleCloseModal}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="p-6">
-            <label
-              htmlFor="edit-title"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Topic Name
-            </label>
-            <input
-              type="text"
-              id="edit-title"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter topic name"
-              onKeyPress={(e) => e.key === "Enter" && handleEditTitle()}
-            />
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleCloseModal}
-                className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEditTitle}
-                disabled={!editTitle.trim()}
-                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                Save
-              </button>
-            </div>
-          </div>
+      <ModalWrapper title="Edit Topic Title">
+        <div>
+          <label
+            htmlFor="edit-title"
+            className="block text-sm text-neutral-700 mb-2"
+          >
+            Topic Name
+          </label>
+          <input
+            id="edit-title"
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleEditTitle()}
+            className="w-full px-4 py-2 bg-white text-neutral-900 rounded-lg border border-neutral-300 focus:outline-none"
+            placeholder="Enter topic name"
+          />
         </div>
-      </div>
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={handleCloseModal}
+            className="flex-1 px-4 py-2 bg-neutral-200 text-neutral-800 rounded-lg"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleEditTitle}
+            disabled={!editTitle.trim()}
+            className="flex-1 px-4 py-2 bg-neutral-800 text-white rounded-lg disabled:opacity-40 disabled:pointer-events-none"
+          >
+            Save
+          </button>
+        </div>
+      </ModalWrapper>
     );
   }
 
-  // ---- Add Sources Modal ----
   if (showAddSources) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="modal-content bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Add Sources</h2>
-            <button
-              onClick={handleCloseModal}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+      <ModalWrapper title="Add Sources">
+        {newFiles.length === 0 && (
+          <div>
+            <label className="block text-sm text-neutral-700 mb-2">
+              Upload Sources (PDF or TXT)
+            </label>
+            <div
+              className={`rounded-lg p-6 text-center bg-white ${
+                isDragging ? "bg-neutral-200" : "bg-neutral-100"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
             >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="p-6 space-y-6">
-            {newFiles.length === 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Sources (PDF or TXT files)
-                </label>
-                <div
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                    isDragging
-                      ? "border-blue-400 bg-blue-50"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
+              <Upload className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
+              <p className="text-sm text-neutral-600 mb-1">
+                Drag and drop, or{" "}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-blue-600 underline"
                 >
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600 mb-2">
-                    Drag and drop files here, or{" "}
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      browse
-                    </button>
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    PDF and TXT files only
-                  </p>
-                </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.txt"
-                  onChange={(e) =>
-                    handleFileSelect(Array.from(e.target.files || []))
-                  }
-                  className="hidden"
-                />
-              </div>
-            )}
-
-            {newFiles.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gray-700">
-                  Selected Files:
-                </h4>
-                <div className="max-h-32 overflow-y-auto space-y-1">
-                  {newFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-700 truncate">
-                          {file.name}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleCloseModal}
-                className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddSourcesSubmit}
-                disabled={newFiles.length === 0}
-                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Sources
-              </button>
+                  browse
+                </button>
+              </p>
+              <p className="text-xs text-neutral-500">PDF or TXT only</p>
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.txt"
+              onChange={(e) =>
+                handleFileSelect(Array.from(e.target.files || []))
+              }
+              className="hidden"
+            />
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ---- Delete Sources Modal ----
-  if (showDeleteSources) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="modal-content bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Delete Sources
-            </h2>
-            <button
-              onClick={handleCloseModal}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="p-6">
-            <p className="text-sm text-gray-600 mb-4">
-              Select sources to delete. You must keep at least 1 source.
-            </p>
-            <div className="max-h-64 overflow-y-auto space-y-2 mb-6">
-              {topic.sources.map((source) => (
-                <label
-                  key={source.id}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+        )}
+        {newFiles.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-neutral-700 mb-1">Selected Files:</p>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {newFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 bg-neutral-200 px-3 py-2 rounded-lg"
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedSources.includes(source.id)}
-                    onChange={() => toggleSourceSelection(source.id)}
-                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 truncate flex-1">
-                    {source.name}
+                  <FileText className="w-4 h-4 text-neutral-500" />
+                  <span className="text-sm text-neutral-800 truncate">
+                    {file.name}
                   </span>
-                </label>
+                </div>
               ))}
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleCloseModal}
-                className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteSources}
-                disabled={
-                  selectedSources.length === 0 ||
-                  topic.sources.length - selectedSources.length < 1
-                }
-                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                Delete ({selectedSources.length})
-              </button>
-            </div>
           </div>
+        )}
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={handleCloseModal}
+            className="flex-1 px-4 py-2 bg-neutral-200 text-neutral-800 rounded-lg"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAddSourcesSubmit}
+            disabled={newFiles.length === 0}
+            className="flex-1 px-4 py-2 bg-neutral-800 text-white rounded-lg disabled:opacity-40 disabled:pointer-events-none"
+          >
+            Add Sources
+          </button>
         </div>
-      </div>
+      </ModalWrapper>
     );
   }
 
-  // ---- Actions Menu ----
+  if (showDeleteSources) {
+    return (
+      <ModalWrapper title="Delete Sources">
+        <p className="text-sm text-neutral-600 mb-4">
+          Select sources to delete. You must keep at least 1 source.
+        </p>
+        <div className="space-y-2 max-h-64 overflow-y-auto mb-6">
+          {topic.sources.map((source) => (
+            <label
+              key={source.id}
+              className="flex items-center gap-3 bg-neutral-100 p-3 rounded-lg"
+            >
+              <input
+                type="checkbox"
+                checked={selectedSources.includes(source.id)}
+                onChange={() => toggleSourceSelection(source.id)}
+                className="w-4 h-4 accent-blue-600"
+              />
+              <span className="text-sm text-neutral-800 truncate">
+                {source.name}
+              </span>
+            </label>
+          ))}
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={handleCloseModal}
+            className="flex-1 px-4 py-2 bg-neutral-200 text-neutral-800 rounded-lg"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDeleteSources}
+            disabled={
+              selectedSources.length === 0 ||
+              topic.sources.length - selectedSources.length < 1
+            }
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-40 disabled:pointer-events-none"
+          >
+            Delete ({selectedSources.length})
+          </button>
+        </div>
+      </ModalWrapper>
+    );
+  }
+
+  // ----------- Main Menu UI ------------
   return (
-    <div className="absolute top-12 right-0 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-48 z-10">
+    <div className="absolute top-12 right-0 bg-white rounded-xl py-2 min-w-48 z-10">
       <button
         onClick={() => setIsEditing(true)}
-        className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 text-sm text-gray-700"
+        className="w-full px-4 py-2 text-left text-sm text-neutral-800"
       >
-        <Edit2 className="w-4 h-4" />
-        Edit Title
+        <div className="flex items-center gap-3">
+          <Edit2 className="w-4 h-4 text-neutral-500" />
+          Edit Title
+        </div>
       </button>
       <button
         onClick={() => setShowAddSources(true)}
-        className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 text-sm text-gray-700"
+        className="w-full px-4 py-2 text-left text-sm text-neutral-800"
       >
-        <Plus className="w-4 h-4" />
-        Add Sources
+        <div className="flex items-center gap-3">
+          <Plus className="w-4 h-4 text-neutral-500" />
+          Add Sources
+        </div>
       </button>
       <button
         onClick={() => setShowDeleteSources(true)}
-        className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 text-sm text-gray-700"
+        className="w-full px-4 py-2 text-left text-sm text-neutral-800"
       >
-        <FolderMinus className="w-4 h-4" />
-        Delete Sources
+        <div className="flex items-center gap-3">
+          <FolderMinus className="w-4 h-4 text-neutral-500" />
+          Delete Sources
+        </div>
       </button>
       <button
         onClick={() => onDeleteTopic(topic.id)}
-        className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-50 text-sm text-red-600"
+        className="w-full px-4 py-2 text-left text-sm text-red-600"
       >
-        <Trash2 className="w-4 h-4" />
-        Delete Topic
+        <div className="flex items-center gap-3">
+          <Trash2 className="w-4 h-4" />
+          Delete Topic
+        </div>
       </button>
     </div>
   );

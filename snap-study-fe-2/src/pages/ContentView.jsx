@@ -58,7 +58,7 @@ export default function ContentView() {
 
   if (!user || flashcards.length === 0) {
     return (
-      <div className="text-center text-gray-500 py-16">
+      <div className="text-center text-neutral-500 py-16 text-sm">
         Loading or no flashcards available...
       </div>
     );
@@ -66,17 +66,15 @@ export default function ContentView() {
 
   const getVisibleCards = () => {
     const visible = [];
-    const totalCards = flashcards.length;
-
-    for (let i = 0; i < Math.min(4, totalCards); i++) {
-      const cardIndex = (currentIndex + i) % totalCards;
+    const total = flashcards.length;
+    for (let i = 0; i < Math.min(4, total); i++) {
+      const idx = (currentIndex + i) % total;
       visible.push({
-        card: flashcards[cardIndex],
-        index: cardIndex,
+        card: flashcards[idx],
+        index: idx,
         stackPosition: i,
       });
     }
-
     return visible;
   };
 
@@ -84,190 +82,192 @@ export default function ContentView() {
   const currentCard = flashcards[currentIndex];
 
   return (
-    <div className="flex justify-center min-h-screen bg-gray-50 px-4 pt-4">
-      <div className="relative w-full max-w-6xl">
-        {[...visibleCards].reverse().map(({ card, index, stackPosition }) => {
-          const isTopCard = stackPosition === 0;
-          const zIndex = 50 - stackPosition;
-          const offset = stackPosition * 5;
-          const scale = 1 - stackPosition * 0.03;
+    <div className="flex justify-center items-center min-h-screen bg-neutral-100 px-4 pt-8 select-none relative">
+      <div className="relative w-full max-w-5xl h-[500px]">
+        {visibleCards
+          .slice()
+          .reverse()
+          .map(({ card, index, stackPosition }) => {
+            const isTop = stackPosition === 0;
+            const zIndex = 50 - stackPosition;
+            const offset = stackPosition * 6;
+            const scale = 1 - stackPosition * 0.03;
 
-          return (
-            <div
-              key={`${index}-${currentIndex}`}
-              className={`absolute inset-0 transition-all duration-700 ease-out ${
-                isTopCard && isFlying
-                  ? "transform translate-y-[-350px] translate-x-[200px] rotate-12 opacity-0"
-                  : ""
-              }`}
-              style={{
-                zIndex,
-                transform:
-                  !isFlying || !isTopCard
-                    ? `translateX(${offset}px) translateY(${offset}px) scale(${scale})`
-                    : undefined,
-                transformOrigin: "center center",
-                height: "500px",
-              }}
-            >
+            return (
               <div
-                className={`relative w-full h-full transition-transform duration-500 ${
-                  isTopCard ? "transform-style-preserve-3d" : ""
-                } ${isTopCard && showBack && !isFlying ? "rotate-y-180" : ""}`}
+                key={`${index}-${currentIndex}`}
+                className={`absolute inset-0 transition-all duration-700 ${
+                  isTop && isFlying
+                    ? "transform translate-y-[-300px] translate-x-[150px] rotate-12 opacity-0"
+                    : ""
+                }`}
                 style={{
-                  transformStyle: isTopCard ? "preserve-3d" : "flat",
-                  perspective: "1000px",
+                  zIndex,
+                  transform:
+                    !isFlying || !isTop
+                      ? `translateX(${offset}px) translateY(${offset}px) scale(${scale})`
+                      : undefined,
+                  transformOrigin: "center",
                 }}
               >
-                {/* Back */}
                 <div
-                  className={`absolute inset-0 w-full h-full p-12 rounded-2xl shadow-xl ${
-                    stackPosition === 0
-                      ? "bg-gray-800"
-                      : stackPosition === 1
-                      ? "bg-gray-700"
-                      : "bg-gray-600"
-                  } flex items-center justify-center`}
+                  className={`relative w-full h-full transition-transform duration-500 ${
+                    isTop ? "transform-style-preserve-3d" : ""
+                  } ${isTop && showBack && !isFlying ? "rotate-y-180" : ""}`}
                   style={{
-                    backfaceVisibility: isTopCard ? "hidden" : "visible",
+                    transformStyle: isTop ? "preserve-3d" : "flat",
+                    perspective: "1000px",
                   }}
                 >
-                  {isTopCard ? (
-                    <div className="text-center text-white w-full">
-                      <div className="mb-6">
-                        <div className="text-sm font-medium text-gray-300 mb-4">
-                          Question {index + 1} of {flashcards.length}
-                        </div>
-                        <div className="text-2xl font-medium leading-relaxed">
-                          {card.front}
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-300">
-                        Press Space to see answer
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center text-white opacity-50">
-                      <div className="text-4xl mb-2">📚</div>
-                      <div className="text-xs">Card {index + 1}</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Front */}
-                {isTopCard && (
+                  {/* Back of card */}
                   <div
-                    className="absolute inset-0 w-full h-full rounded-2xl shadow-xl bg-white"
+                    className={`absolute inset-0 w-full h-full p-10 rounded-xl flex items-center justify-center ${
+                      stackPosition === 0
+                        ? "bg-neutral-800 text-white"
+                        : stackPosition === 1
+                        ? "bg-neutral-700 text-white"
+                        : "bg-neutral-600 text-white"
+                    }`}
                     style={{
-                      backfaceVisibility: "hidden",
-                      transform: "rotateY(180deg)",
+                      backfaceVisibility: isTop ? "hidden" : "visible",
                     }}
                   >
-                    {currentCard.imageUrl ? (
-                      <div className="flex h-full">
-                        <div className="flex-1 p-8 flex flex-col justify-center">
-                          <div className="mb-4">
-                            <div className="text-sm font-medium text-gray-500 mb-4">
+                    {isTop ? (
+                      <div className="text-center w-full">
+                        <div className="text-xs text-neutral-400 mb-3">
+                          Question {index + 1} of {flashcards.length}
+                        </div>
+                        <div className="text-xl font-medium mb-6">
+                          {card.front}
+                        </div>
+                        <div className="text-xs text-neutral-400">
+                          Press{" "}
+                          <kbd className="bg-white px-1 py-0.5 rounded text-black text-xs">
+                            Space
+                          </kbd>{" "}
+                          to view answer
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center opacity-40 text-sm">
+                        <div className="text-3xl mb-2">📘</div>
+                        Card {index + 1}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Front (answer) */}
+                  {isTop && (
+                    <div
+                      className="absolute inset-0 w-full h-full bg-white rounded-xl p-10"
+                      style={{
+                        backfaceVisibility: "hidden",
+                        transform: "rotateY(180deg)",
+                      }}
+                    >
+                      {currentCard.imageUrl ? (
+                        <div className="flex h-full">
+                          <div className="flex-1 flex flex-col justify-center pr-6">
+                            <div className="text-xs text-neutral-400 mb-2">
                               Card {index + 1} of {flashcards.length}
                             </div>
 
-                            <div className="mb-6">
-                              <div className="text-sm font-semibold text-blue-600 mb-2">
+                            <div className="mb-4">
+                              <div className="text-xs text-neutral-500 mb-1">
                                 QUESTION
                               </div>
-                              <div className="text-lg text-gray-800 font-medium mb-4">
+                              <div className="text-lg text-neutral-800 font-medium">
                                 {currentCard.front}
                               </div>
                             </div>
 
                             <div>
-                              <div className="text-sm font-semibold text-green-600 mb-2">
+                              <div className="text-xs text-neutral-500 mb-1">
                                 ANSWER
                               </div>
-                              <div className="text-lg text-gray-800">
+                              <div className="text-lg text-neutral-800">
                                 {currentCard.back}
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="flex-1 p-8 flex items-center justify-center bg-gray-50">
-                          <img
-                            src={currentCard.imageUrl}
-                            alt="flashcard visual"
-                            className="max-w-full max-h-full object-contain rounded-lg shadow-md"
-                          />
+                          <div className="flex-1 flex items-center justify-center bg-neutral-100 rounded-lg">
+                            <img
+                              src={currentCard.imageUrl}
+                              alt="card"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="p-12 h-full flex flex-col justify-center">
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-gray-500 mb-6">
+                      ) : (
+                        <div className="h-full flex flex-col justify-center text-center">
+                          <div className="text-xs text-neutral-400 mb-4">
                             Card {index + 1} of {flashcards.length}
                           </div>
 
-                          <div className="mb-8">
-                            <div className="text-sm font-semibold text-blue-600 mb-3">
+                          <div className="mb-6">
+                            <div className="text-xs text-neutral-500 mb-1">
                               QUESTION
                             </div>
-                            <div className="text-2xl text-gray-800 font-medium mb-8">
+                            <div className="text-xl text-neutral-800 font-medium">
                               {currentCard.front}
                             </div>
                           </div>
 
                           <div>
-                            <div className="text-sm font-semibold text-green-600 mb-3">
+                            <div className="text-xs text-neutral-500 mb-1">
                               ANSWER
                             </div>
-                            <div className="text-2xl text-gray-800">
+                            <div className="text-xl text-neutral-800">
                               {currentCard.back}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        {/* Progress Bar */}
-        <div className="absolute -bottom-16 left-0 right-0 text-center">
-          <div className="inline-flex items-center space-x-4 bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg">
-            <div className="flex space-x-1">
-              {flashcards.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    idx === currentIndex
-                      ? "bg-blue-500"
-                      : idx < currentIndex
-                      ? "bg-green-400"
-                      : "bg-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm font-medium text-gray-700">
-              {currentIndex + 1} / {flashcards.length}
-            </span>
+        {/* Progress */}
+        <div className="absolute -bottom-14 left-0 right-0 flex flex-col items-center gap-1">
+          <div className="flex gap-1">
+            {flashcards.map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-2 h-2 rounded-full ${
+                  idx === currentIndex
+                    ? "bg-neutral-900"
+                    : idx < currentIndex
+                    ? "bg-neutral-400"
+                    : "bg-neutral-300"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="text-xs text-neutral-500">
+            {currentIndex + 1} / {flashcards.length}
           </div>
         </div>
 
-        {/* Instructions */}
-        <div className="absolute -bottom-8 left-0 right-0 text-center">
-          <p className="text-gray-600">
-            Press{" "}
-            <kbd className="px-2 py-1 bg-white rounded shadow text-sm">
-              Space
-            </kbd>{" "}
-            to {showBack ? "continue" : "reveal answer"}
-          </p>
+        {/* Instruction */}
+        <div className="absolute -bottom-4 left-0 right-0 text-center text-xs text-neutral-500">
+          Press{" "}
+          <kbd className="bg-white px-1 py-0.5 rounded text-black text-xs">
+            Space
+          </kbd>{" "}
+          to {showBack ? "continue" : "reveal answer"}
         </div>
       </div>
 
+      {/* Interaction lock */}
+      {isFlying && (
+        <div className="absolute inset-0 bg-transparent z-50 pointer-events-auto" />
+      )}
+
+      {/* Custom styles */}
       <style jsx>{`
         .transform-style-preserve-3d {
           transform-style: preserve-3d;

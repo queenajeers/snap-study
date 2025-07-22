@@ -56,16 +56,17 @@ export const AddTopicModal = ({ isOpen, onClose, onAddTopic }) => {
 
   if (!isOpen) return null;
 
+  const uploading = files.length > 0 && !title.trim();
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Add New Topic</h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-6 h-6" />
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50">
+      <div className="bg-neutral-100 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6">
+          <h2 className="text-lg font-medium text-neutral-900">
+            Add New Topic
+          </h2>
+          <button onClick={handleClose} className="text-neutral-500">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -73,7 +74,7 @@ export const AddTopicModal = ({ isOpen, onClose, onAddTopic }) => {
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm text-neutral-700 mb-2"
             >
               Topic Name
             </label>
@@ -82,41 +83,38 @@ export const AddTopicModal = ({ isOpen, onClose, onAddTopic }) => {
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter topic name"
+              className="w-full px-4 py-2 bg-white text-neutral-900 rounded-lg border border-neutral-300 focus:outline-none focus:ring-0"
               required
             />
           </div>
 
           {files.length === 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Sources (PDF or TXT files)
+              <label className="block text-sm text-neutral-700 mb-2">
+                Upload Sources (PDF or TXT)
               </label>
               <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                  isDragging
-                    ? "border-blue-400 bg-blue-50"
-                    : "border-gray-300 hover:border-gray-400"
+                className={`rounded-lg p-6 text-center bg-white ${
+                  isDragging ? "bg-neutral-200" : "bg-neutral-100"
                 }`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
               >
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-sm text-gray-600 mb-2">
-                  Drag and drop files here, or{" "}
+                <Upload className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
+                <p className="text-sm text-neutral-600 mb-1">
+                  Drag and drop files, or{" "}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                    className="text-blue-600 underline"
                   >
                     browse
                   </button>
                 </p>
-                <p className="text-xs text-gray-500">PDF and TXT files only</p>
+                <p className="text-xs text-neutral-500">PDF and TXT only</p>
               </div>
-
               <input
                 ref={fileInputRef}
                 type="file"
@@ -132,25 +130,23 @@ export const AddTopicModal = ({ isOpen, onClose, onAddTopic }) => {
 
           {files.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">
-                Selected Files:
-              </h4>
-              <div className="max-h-32 overflow-y-auto space-y-1">
+              <p className="text-sm text-neutral-700">Selected Files:</p>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
                 {files.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between px-3 py-2 bg-neutral-200 rounded-lg"
                   >
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-700 truncate">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <FileText className="w-4 h-4 text-neutral-500 shrink-0" />
+                      <span className="text-sm text-neutral-800 truncate">
                         {file.name}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="text-red-500 hover:text-red-700 p-1"
+                      className="text-neutral-500"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -164,14 +160,14 @@ export const AddTopicModal = ({ isOpen, onClose, onAddTopic }) => {
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-2 bg-neutral-200 text-neutral-800 rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim() || files.length === 0}
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2 bg-neutral-800 text-white rounded-lg disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add Topic

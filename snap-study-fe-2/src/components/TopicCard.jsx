@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MoreHorizontal, FileText, Loader2 } from "lucide-react";
+import { MoreHorizontal, FileText } from "lucide-react";
 import { TopicActions } from "./TopicActions";
 import { off, onValue, ref } from "firebase/database";
 import { database } from "../../firebaseInit";
@@ -20,7 +20,9 @@ export const TopicCard = ({
   const navigate = useNavigate();
 
   const onCardClicked = () => {
-    navigate(`topic/${topic.id}/`);
+    if (!topic.isLoading) {
+      navigate(`topic/${topic.id}/`);
+    }
   };
 
   useEffect(() => {
@@ -47,10 +49,9 @@ export const TopicCard = ({
 
     const unsubscribe = onValue(uploadStatusRef.current, (snapshot) => {
       const upload_status = snapshot.val();
-      setUploadStatus(upload_status.progress);
+      setUploadStatus(upload_status?.progress || 0);
     });
 
-    // Cleanup function
     return () => {
       if (uploadStatusRef.current) {
         off(uploadStatusRef.current);
@@ -61,14 +62,16 @@ export const TopicCard = ({
   return (
     <div
       onClick={onCardClicked}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 p-6 relative cursor-pointer"
+      className={`bg-neutral-100 rounded-2xl p-6 relative cursor-pointer transition-colors duration-200 ${
+        topic.isLoading ? "pointer-events-none opacity-70" : ""
+      }`}
     >
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-6">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-xl font-medium text-neutral-900 mb-1">
             {topic.title}
           </h3>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-1.5 text-sm text-neutral-500">
             <FileText className="w-4 h-4" />
             <span>{topic.sources.length} sources</span>
           </div>
@@ -79,13 +82,12 @@ export const TopicCard = ({
               e.stopPropagation();
               setShowActions(!showActions);
             }}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 rounded-md"
           >
-            <MoreHorizontal className="w-5 h-5 text-gray-400" />
+            <MoreHorizontal className="w-5 h-5 text-neutral-500" />
           </button>
           {showActions && (
             <div onClick={(e) => e.stopPropagation()}>
-              {/* ✅ prevent menu clicks from navigating */}
               <TopicActions
                 topic={topic}
                 onEditTitle={onEditTitle}
@@ -100,9 +102,9 @@ export const TopicCard = ({
       </div>
 
       {topic.isLoading && (
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-neutral-200 rounded-full h-2">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+            className="bg-neutral-600 h-2 rounded-full transition-all duration-300 ease-out"
             style={{ width: `${uploadStatus}%` }}
           />
         </div>

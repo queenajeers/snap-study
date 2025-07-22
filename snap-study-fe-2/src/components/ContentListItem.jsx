@@ -12,23 +12,26 @@ function ContentListItem({ contentId, content }) {
     }
   };
 
+  const isDisabled = content.creationInProgress;
+
   return (
     <div
       onClick={handleClick}
-      className={`relative cursor-pointer bg-white rounded-2xl shadow p-4 border border-gray-200 hover:shadow-md transition-shadow ${
-        content.creationInProgress ? "opacity-60 cursor-not-allowed" : ""
+      className={`relative rounded-xl bg-neutral-100 px-5 py-4 transition-colors ${
+        isDisabled ? "opacity-50 pointer-events-none" : "cursor-pointer"
       }`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-sm text-gray-500">Topic Name:</div>
-        {content.creationInProgress && (
-          <div className="flex items-center text-yellow-600 text-xs font-medium gap-1">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm text-neutral-500">Topic Name:</span>
+        {isDisabled && (
+          <div className="flex items-center text-neutral-600 text-xs gap-1">
             <Loader className="w-4 h-4 animate-spin" />
             Generating...
           </div>
         )}
       </div>
-      <div className="text-base font-semibold text-gray-900">
+
+      <div className="text-base font-medium text-neutral-900">
         {content.topicNames || "Untitled Topic"}
       </div>
     </div>

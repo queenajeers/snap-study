@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import logo from "/SnapStudyLogo.png";
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, login } = useAuth();
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
@@ -13,12 +13,19 @@ const Header = () => {
         </div>
 
         <div className="flex items-center space-x-3">
-          {user && (
+          {user ? (
             <button
               onClick={logout}
-              className="bg-[#da453a] text-white  px-4 py-2 rounded hover:bg-[#c12f39] transition"
+              className="bg-gray-900 text-white px-4 py-2 rounded-md font-medium"
             >
               Logout
+            </button>
+          ) : (
+            <button
+              onClick={login}
+              className="bg-gray-900 text-white px-4 py-2 rounded-md font-medium"
+            >
+              Login
             </button>
           )}
         </div>
