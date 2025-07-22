@@ -5,6 +5,7 @@ import Protected from "./pages/Protected";
 import { AuthProvider } from "./contexts/AuthContext";
 import StudyMaterialView from "./pages/StudyMaterialView";
 import TopicView from "./pages/TopicView";
+import ContentView from "./pages/ContentView";
 
 function Layout() {
   return (
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Protected /> },
       { path: "topic/:id", element: <TopicView /> },
+      { path: "topic/:id/content/:contentId", element: <ContentView /> },
     ],
   },
   ,

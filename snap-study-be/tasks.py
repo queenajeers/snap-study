@@ -446,30 +446,37 @@ async def handle_content(uid: str, project_id: str, content_type: str, filePath:
 async def generate_flashcards(session, topic_text: str, topic_title: str, uid: str):
     """Generate flashcards using LLM from a topic text"""
     prompt = f"""
-You are a medical flashcard creation assistant. Based on the following topic titled "{topic_title}", generate a list of detailed flashcards.
+You are a medical flashcard creation assistant. Based on the following topic titled "{topic_title}", generate a set of high-quality educational flashcards.
 
-**Instructions**:
+**Flashcard Requirements**:
 - Each flashcard must include:
-  - **front**: A clear, concise question or prompt based on the topic.
-  - **back**: A thorough and accurate answer or explanation.
-  - **backImagePrompt**: A short, descriptive prompt for an image that would aid understanding (e.g., "Diagram of nephron structure", "X-ray showing lung consolidation", "Histology slide of squamous cell carcinoma"). 
-    - If **no** image would help, write **"none"** instead of leaving it blank.
-    - Be specific and helpful. The goal is to enhance memory with visuals where possible.
+  - **front**: A clear and focused question or prompt designed to test understanding of the topic.
+  - **back**: A comprehensive, medically accurate answer or explanation written in a clear and concise style.
+  - **backImagePrompt**: A brief, descriptive prompt for generating a **diagram-style image** that would aid in memory and understanding.
 
-- Return **only valid JSON** in the following format (no markdown or commentary):
+**Image Prompt Guidelines**:
+- Describe a **clean, text-free anatomical or conceptual diagram** that would help a medical student quickly understand or recall the concept.
+- Diagrams should be clear and visually organized, but must **not include any text, labels, or annotations**.
+- If no visual aid would be useful for this flashcard, return the exact string: `"none"`.
+- Avoid photorealistic images, clinical photos, or illustrations with human subjects. Focus on **abstract or anatomical diagrams** only.
+
+**Response Format**:
+- Return only valid JSON in the following format (no markdown, no explanation):
 
 [
   {{
-    "front": "...",
-    "back": "...",
-    "backImagePrompt": "..." or "none"
+    "front": "Your question here",
+    "back": "Your detailed answer here",
+    "backImagePrompt": "Diagram prompt here" or "none"
   }},
   ...
 ]
 
-**Text**:
+**Topic Text**:
 {topic_text}
 """
+
+
 
 
     payload = {
@@ -502,7 +509,67 @@ You are a medical flashcard creation assistant. Based on the following topic tit
         return []
 
 
+import os
+import uuid
+from typing import Optional
+
 async def generate_image_and_upload(prompt: str, uid: str) -> Optional[str]:
+    """Generate image using Google Gemini and upload to Firebase, returning the public URL."""
+    try:
+        from google import genai
+        from google.genai import types
+        from PIL import Image
+        import logging
+
+        # Use your logger (or fallback to print if not available)
+        logger = logging.getLogger(__name__)
+
+        # Initialize Gemini client
+        client = genai.Client(api_key="AIzaSyDnDOvevf8bl85symrWVu2BLHmEYP-4-D4")
+
+        # Generate image using Gemini
+        response = client.models.generate_images(
+            model='imagen-4.0-generate-preview-06-06',
+            prompt=prompt,
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                aspect_ratio="1:1"
+            )
+        )
+
+        if not response.generated_images:
+            logger.warning(f"No image generated for prompt: {prompt}")
+            return None
+
+        # Get the first generated image (PIL.Image object)
+        generated_image = response.generated_images[0]
+        image = generated_image.image
+
+        # Save locally (temporary file)
+        filename = f"{uuid.uuid4().hex}.png"
+        local_path = os.path.join(os.getcwd(), filename)
+        image.save(local_path)
+
+        # Upload to Firebase Storage
+        from firebase_admin import storage  # Assuming Firebase Admin SDK is initialized
+        bucket = storage.bucket()
+        firebase_path = f"users/{uid}/project_image_generations/{filename}"
+        blob = bucket.blob(firebase_path)
+        blob.upload_from_filename(local_path)
+        blob.make_public()
+
+        # Clean up local file
+        os.remove(local_path)
+
+        return blob.public_url
+
+    except Exception as e:
+        logger.error(f"Gemini image generation/upload failed: {e}")
+        return None
+
+
+
+async def generate_image_and_upload_old(prompt: str, uid: str) -> Optional[str]:
     """Generate image from prompt and upload to Firebase, return public URL"""
     try:
         from openai import OpenAI
@@ -566,3 +633,5 @@ def extract_flashcards_json(text: str):
     except Exception as e:
         logger.warning(f"Failed to extract flashcards JSON: {e}")
         return []
+
+

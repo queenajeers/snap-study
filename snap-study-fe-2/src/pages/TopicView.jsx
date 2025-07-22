@@ -6,10 +6,11 @@ import { ref, onValue, off } from "firebase/database";
 import { database } from "../../firebaseInit";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
+import ContentList from "../components/ContentList";
 
 function TopicView() {
   const [topic, setTopic] = useState(null);
-  const [content, setContent] = useState(null);
+  const [contents, setContent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { id } = useParams();
   const { user } = useAuth();
@@ -22,10 +23,14 @@ function TopicView() {
     const unsubscribe = onValue(topicRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        console.log(data);
         setTopic(data);
+        console.log(data.contents);
+        if (data.contents) {
+          setContent(data.contents);
+        }
       } else {
         setTopic(null);
+        setContent(null);
       }
     });
 
@@ -107,7 +112,7 @@ function TopicView() {
         </div>
 
         {/* No Topics Message */}
-        {topic && topic.length === 0 ? (
+        {!contents ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
               <FileText className="w-12 h-12 text-gray-400" />
@@ -121,7 +126,7 @@ function TopicView() {
           </div>
         ) : (
           // Topic Cards Grid
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+          <ContentList contents={contents} />
         )}
       </div>
 
