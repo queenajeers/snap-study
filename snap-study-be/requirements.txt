@@ -7,7 +7,7 @@ aiohttp
 python-dotenv
 firebase-admin
 openai
-pinecone-client
+pinecone
 langchain
 langchain-community
 PyMuPDF
