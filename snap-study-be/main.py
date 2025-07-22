@@ -50,6 +50,12 @@ def process_source(request: SourceRequest):
         "task_id": task.id  # ✅ this is safe to serialize
     }
 
+@app.get("/")
+def process_source(request: SourceRequest):
+   
+    return {
+        "Running"
+    }
 
 class CreateContentRequest(BaseModel):
     uid: str
